@@ -1,0 +1,176 @@
+package player.android;
+
+import java.io.FileDescriptor;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
+
+import android.media.AudioFormat;
+import android.media.AudioManager;
+import android.media.AudioTrack;
+import android.media.SoundPool;
+import android.util.Log;
+
+class StreamStatus {
+	private float leftVol;
+	private float rightVol;
+	private boolean playing; 
+	
+	public StreamStatus(){
+		leftVol = 0.0f;
+		rightVol = 0.0f;
+		playing = false;
+	}
+	public float getLeftVol() {
+		return leftVol;
+	}
+	public float getRightVol() {
+		return rightVol;
+	}
+	public void setLeftVol(float vol) {
+		leftVol = vol;
+	}
+	public void setRightVol(float vol) {
+		rightVol = vol;
+	}
+	public boolean isPlaying() {
+		return playing;
+	}
+	public void setPlayStatus(boolean status) {
+		playing = status;
+	}
+}
+
+public class TrackManager {
+    int intSize;
+    Set<AudioTrack> tracks;
+    SoundPool sounds;
+    HashMap<Integer, StreamStatus> volumeMap; 
+    private static final String TAG = "Track Manager";
+    
+    public TrackManager() {
+    	intSize = android.media.AudioTrack.getMinBufferSize(8000,
+                AudioFormat.CHANNEL_CONFIGURATION_MONO,
+                AudioFormat.ENCODING_PCM_16BIT);
+    	tracks = new HashSet<AudioTrack>();
+    	volumeMap = new HashMap<Integer, StreamStatus>(); 
+    	
+    	sounds = new SoundPool(5, AudioManager.STREAM_MUSIC, 0);
+    }
+	
+    public void AddTrack(byte[] byteData, int channel) {
+    	AudioTrack track = new AudioTrack(AudioManager.STREAM_MUSIC, 8000,
+    			AudioFormat.CHANNEL_CONFIGURATION_MONO,
+    			AudioFormat.ENCODING_PCM_16BIT, intSize,
+    			AudioTrack.MODE_STREAM);
+
+		// Start playing data that is written
+		tracks.add(track);
+    	track.play();
+    	
+    	if (channel<0)
+    		track.setStereoVolume(1.0f, 0.0f);
+    	else if (channel>0)
+    		track.setStereoVolume(0.0f, 1.0f);
+
+		// Write the byte array to the track
+		track.write(byteData, 0, byteData.length);
+
+		// Done writing to the track
+		track.stop();    	
+    }
+
+    public int addSound(String path) {
+    	int streamID = sounds.load(path, 1);
+    	volumeMap.put(streamID, new StreamStatus());
+    	return streamID;
+    }
+
+    public boolean playSound(int id, int channel) {
+    	Log.v(TAG, "playing=" + id+" "+channel);
+    	float leftVolume = 0.0f;
+    	float rightVolume = 0.0f;
+    	StreamStatus vol = volumeMap.get(id);
+    	if (vol==null)
+    		return false;
+    	
+    	// check if already playing
+    	if (vol.isPlaying())
+    		return true;
+    	
+    	if (channel<0){
+    		leftVolume = 1.0f;
+    		vol.setLeftVol(1.0f);
+    	}
+    	else if (channel>0){
+    		rightVolume = 1.0f;
+    		vol.setRightVol(1.0f);
+    	}
+    	
+    	vol.setPlayStatus(true);
+    	sounds.play(id, leftVolume, rightVolume, 1, -1, 1.0f);
+    	return true;
+    }
+    
+    public void pauseAllSound(HashMap<Integer, Integer> soundMap) {
+    	for (int ID: soundMap.keySet()) {
+    		int streamID = soundMap.get(ID);
+    		pauseSound(streamID);
+    	}
+    }
+    
+    public boolean pauseSound(int streamID) {
+    	StreamStatus vol = volumeMap.get(streamID);
+    	if (vol==null)
+    		return false;
+    	
+    	// check if already playing
+    	if (!vol.isPlaying())
+    		return true;
+    	
+    	vol.setPlayStatus(false);
+    	sounds.pause(streamID);
+    	return true;
+    }
+    
+    public void stopAllSounds(HashMap<Integer, Integer> soundMap) {
+    	for (int ID: soundMap.keySet()) {
+    		int streamID = soundMap.get(ID);
+    		stopSound(streamID);
+    	}
+    }
+
+    public void stopSound(int streamID) {
+    	StreamStatus vol = volumeMap.get(streamID);
+    	vol.setPlayStatus(false);
+    	sounds.stop(streamID);
+    }
+    
+    public void toggleAllSounds (HashMap<Integer, Integer> soundMap) {
+    	for (int ID: soundMap.keySet()) {
+    		int streamID = soundMap.get(ID);
+    		toggleSound(streamID);
+    	}
+    }
+    
+    public boolean toggleSound (int streamID) {
+    	StreamStatus vol = volumeMap.get(streamID);
+    	if (vol==null)
+    		return false;
+    	
+    	// check if already playing
+    	if (!vol.isPlaying())
+    		return true;
+    	
+    	float tmp = vol.getLeftVol();
+    	vol.setLeftVol(vol.getRightVol());
+    	vol.setRightVol(tmp);
+    	sounds.pause(streamID);
+    	vol.setPlayStatus(false);
+    	sounds.setVolume(streamID, vol.getLeftVol(), vol.getRightVol());
+    	vol.setPlayStatus(true);
+    	sounds.resume(streamID);
+    	
+    	return true;
+    }
+}

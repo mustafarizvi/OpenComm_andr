@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?> 
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" 
+     android:orientation="vertical" android:layout_width="fill_parent" 
+     android:layout_height="fill_parent"> 
+
+     <TableLayout android:orientation="horizontal" 
+          android:layout_width="fill_parent" 
+          android:layout_height="fill_parent"> 
+          
+          <TableRow>
+          	<Button android:layout_width="100px" 
+               android:layout_height="wrap_content" android:text="Play" 
+               android:id="@+id/play" /> 
+            <EditText
+			 	android:id="@+id/txt_play"
+			 	android:layout_width="200sp"
+			 	android:layout_height="wrap_content"/>  
+		  </TableRow>
+		  
+		  <TableRow>
+          	<Button android:layout_width="100px" 
+               android:layout_height="wrap_content" android:text="Pause" 
+               android:id="@+id/pause" /> 
+            <EditText
+			 	android:id="@+id/txt_pause"
+			 	android:layout_width="fill_parent"
+			 	android:layout_height="wrap_content"/>  
+		  </TableRow>
+		  
+          <TableRow>	
+          	<Button android:layout_width="100px" 
+               	android:layout_height="wrap_content" android:text="Toggle" 
+               	android:id="@+id/toggle" />
+			 <EditText
+			 	android:id="@+id/txt_toggle"
+			 	android:layout_width="fill_parent"
+			 	android:layout_height="wrap_content"/>
+          </TableRow>
+
+		  <TableRow>	
+          <Button android:layout_width="100px" 
+               android:layout_height="wrap_content" android:text="Stop" 
+               android:id="@+id/stop" />
+          </TableRow>
+                
+     </TableLayout> 
+</LinearLayout> 
